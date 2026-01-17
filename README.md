@@ -16,7 +16,7 @@ A modern **Admin Dashboard Web Application** built using **React, Vite, Tailwind
 
 ---
 
-## 🛠 Tech Stack
+##  Tech Stack
 
 * **Frontend:** React.js
 * **Build Tool:** Vite
@@ -85,7 +85,7 @@ http://localhost:5173
 
 ---
 
-## ❗ Important Notes
+##  Important Notes
 
 * `node_modules/` is **not committed** (handled by `.gitignore`)
 * This project uses **mock authentication** (no backend yet)
@@ -93,7 +93,7 @@ http://localhost:5173
 
 ---
 
-## 🌱 Future Improvements
+##  Future Improvements
 
 * Backend integration (Node.js / Firebase)
 * Role-based protected routes
@@ -103,13 +103,13 @@ http://localhost:5173
 
 ---
 
-## 👨‍💻 Author
+##  Author
 
 **Your oggu pavan**
 Frontend Developer | react.js
 
 ---
 
-## ⭐ If you like this project
+##  If you like this project
 
 Give it a ⭐ on GitHub — it really helps!
