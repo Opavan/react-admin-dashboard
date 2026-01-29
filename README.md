@@ -56,6 +56,7 @@ Use these credentials to log in:
 
 * **Admin:** `admin@test.com` / any password
 * **User:** `user@test.com` / any password
+* Live Demo : https://react-admin-dashboard-five-gamma.vercel.app
 
 ---
 
