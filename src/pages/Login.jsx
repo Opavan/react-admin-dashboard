@@ -29,6 +29,23 @@ const Login = () => {
     }
   };
 
+  // ✅ Demo login (added)
+  const handleDemoLogin = async () => {
+    setError('');
+    setLoading(true);
+
+    try {
+      await login('admin@test.com', '123456'); // change password if needed
+      toast.success('Demo login successful');
+      navigate('/dashboard');
+    } catch {
+      toast.error('Demo login failed');
+      setError('Demo login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-4">
       <div className="w-full max-w-md bg-slate-900/90 backdrop-blur-md border border-slate-700 rounded-2xl shadow-2xl p-8">
@@ -94,6 +111,15 @@ const Login = () => {
           <p className="text-xs text-slate-400 mb-1 font-medium">Demo Credentials</p>
           <p className="text-xs text-slate-500">Admin: admin@test.com</p>
           <p className="text-xs text-slate-500">User: user@test.com</p>
+
+          {/* ✅ Demo button added */}
+          <button
+            onClick={handleDemoLogin}
+            disabled={loading}
+            className="mt-3 w-full py-2 rounded-lg bg-green-600 hover:bg-green-700 transition text-white text-sm font-medium"
+          >
+             Login as Demo User
+          </button>
         </div>
 
       </div>
