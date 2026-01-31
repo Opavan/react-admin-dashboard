@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { ShieldCheck, Award, Star, TrendingUp, Mail, Phone, MapPin } from 'lucide-react';
+import { ShieldCheck, Award, Star, TrendingUp, Mail, Phone, MapPin, Search } from 'lucide-react';
+import { useSearch } from '../../hooks/useSearch';
 import Loader from '../../components/Loader';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const VerifiedCustomers = () => {
   const [verifiedCustomers, setVerifiedCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { searchQuery, setSearchQuery } = useSearch();
   const [selectedTier, setSelectedTier] = useState('all');
 
   useEffect(() => {
@@ -83,9 +85,18 @@ const VerifiedCustomers = () => {
     }, 800);
   }, []);
 
-  const filteredCustomers = selectedTier === 'all' 
-    ? verifiedCustomers 
-    : verifiedCustomers.filter(c => c.tier === selectedTier);
+  const filteredCustomers = verifiedCustomers.filter((customer) => {
+    const matchesSearch = 
+      customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      customer.phone.includes(searchQuery) ||
+      customer.location.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesTier = 
+      selectedTier === 'all' || customer.tier === selectedTier;
+    
+    return matchesSearch && matchesTier;
+  });
 
   const getTierBadge = (tier) => {
     const styles = {
@@ -113,23 +124,35 @@ const VerifiedCustomers = () => {
     <div className="p-6 fade-in">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
             <ShieldCheck className="text-green-600" size={32} />
             Verified Customers
           </h1>
           <p className="text-gray-600 mt-1">Top tier customers with verified accounts</p>
         </div>
-        <select
-          value={selectedTier}
-          onChange={(e) => setSelectedTier(e.target.value)}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-        >
-          <option value="all">All Tiers</option>
-          <option value="platinum">Platinum</option>
-          <option value="gold">Gold</option>
-          <option value="silver">Silver</option>
-        </select>
+        <div className="flex gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by name, email, location..."
+              className="w-full md:w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+          </div>
+          <select
+            value={selectedTier}
+            onChange={(e) => setSelectedTier(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+          >
+            <option value="all">All Tiers</option>
+            <option value="platinum">Platinum</option>
+            <option value="gold">Gold</option>
+            <option value="silver">Silver</option>
+          </select>
+        </div>
       </div>
 
       {/* Tier Stats */}

@@ -1,18 +1,23 @@
 import { useState, useEffect } from 'react';
-import { AlertTriangle, TrendingDown, Package, RefreshCw, Plus, Minus, Search } from 'lucide-react';
+import { AlertTriangle, TrendingDown, Package, RefreshCw, Plus, Minus, Search, Download } from 'lucide-react';
+import { useSearch } from '../../hooks/useSearch';
+import { useNotification } from '../../hooks/useNotification';
+import ExportModal from '../../components/ExportModal';
 import Loader from '../../components/Loader';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 const Inventory = () => {
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { searchQuery, setSearchQuery } = useSearch();
+  const { addNotification } = useNotification();
   const [filterStatus, setFilterStatus] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [showExportModal, setShowExportModal] = useState(false);
 
   useEffect(() => {
     // Mock inventory data
     setTimeout(() => {
-      setInventory([
+      const inventoryData = [
         { id: 1, name: 'Wireless Headphones Pro', sku: 'WHP-001', currentStock: 12, minStock: 20, maxStock: 100, reorderPoint: 25, lastRestocked: '2024-01-10', status: 'low', image: '🎧', category: 'Electronics' },
         { id: 2, name: 'Bluetooth Speaker Mini', sku: 'BSM-088', currentStock: 0, minStock: 15, maxStock: 80, reorderPoint: 20, lastRestocked: '2024-01-05', status: 'out', image: '🔊', category: 'Electronics' },
         { id: 3, name: 'Smart Watch Series 5', sku: 'SWT-005', currentStock: 45, minStock: 20, maxStock: 100, reorderPoint: 30, lastRestocked: '2024-01-15', status: 'good', image: '⌚', category: 'Electronics' },
@@ -23,10 +28,24 @@ const Inventory = () => {
         { id: 8, name: 'Yoga Mat Premium', sku: 'YMP-445', currentStock: 92, minStock: 30, maxStock: 120, reorderPoint: 40, lastRestocked: '2024-01-16', status: 'good', image: '🧘', category: 'Sports' },
         { id: 9, name: 'Water Bottle Insulated', sku: 'WBI-889', currentStock: 5, minStock: 40, maxStock: 200, reorderPoint: 50, lastRestocked: '2024-01-09', status: 'critical', image: '🍶', category: 'Sports' },
         { id: 10, name: 'Phone Case Protective', sku: 'PCP-667', currentStock: 156, minStock: 50, maxStock: 300, reorderPoint: 75, lastRestocked: '2024-01-15', status: 'good', image: '📱', category: 'Accessories' },
-      ]);
+      ];
+
+      setInventory(inventoryData);
+      
+      // Show notifications for critical items
+      inventoryData.forEach((item) => {
+        if (item.status === 'out') {
+          addNotification(`⚠️ ${item.name} is out of stock!`, 'error', 0);
+        } else if (item.status === 'critical') {
+          addNotification(`🔴 CRITICAL: ${item.name} - Only ${item.currentStock} items left`, 'warning', 0);
+        } else if (item.status === 'low') {
+          addNotification(`📦 Low stock: ${item.name} - ${item.currentStock} remaining`, 'info', 0);
+        }
+      });
+
       setLoading(false);
     }, 800);
-  }, []);
+  }, [addNotification]);
 
   const getStatusInfo = (status) => {
     const statusMap = {
@@ -57,8 +76,8 @@ const Inventory = () => {
 
   const filteredInventory = inventory.filter(item => {
     const matchesSearch = 
-      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.sku.toLowerCase().includes(searchTerm.toLowerCase());
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.sku.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFilter = filterStatus === 'all' || item.status === filterStatus;
     return matchesSearch && matchesFilter;
   });
@@ -88,10 +107,19 @@ const Inventory = () => {
           <h1 className="text-2xl font-bold text-gray-800">Inventory Management</h1>
           <p className="text-gray-600 mt-1">Monitor and manage stock levels</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-          <RefreshCw size={18} />
-          Refresh Stock
-        </button>
+        <div className="flex gap-3">
+          <button 
+            onClick={() => setShowExportModal(true)}
+            className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+          >
+            <Download size={18} />
+            Export
+          </button>
+          <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+            <RefreshCw size={18} />
+            Refresh Stock
+          </button>
+        </div>
       </div>
 
       {/* Status Summary Cards */}
@@ -168,8 +196,8 @@ const Inventory = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
               type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by product name or SKU..."
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
             />
@@ -267,6 +295,26 @@ const Inventory = () => {
           </table>
         </div>
       </div>
+
+      {/* Export Modal */}
+      <ExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        data={filteredInventory.map(({ id, name, sku, currentStock, minStock, maxStock, reorderPoint, lastRestocked, status, category }) => ({
+          id,
+          'Product Name': name,
+          'SKU': sku,
+          'Current Stock': currentStock,
+          'Min Stock': minStock,
+          'Max Stock': maxStock,
+          'Reorder Point': reorderPoint,
+          'Status': status.toUpperCase(),
+          'Category': category,
+          'Last Restocked': lastRestocked,
+        }))}
+        filename={`inventory-${new Date().toISOString().split('T')[0]}`}
+        dataName="Inventory"
+      />
     </div>
   );
 };

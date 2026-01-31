@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, Plus, Edit, Trash2, Eye, Star, Package } from 'lucide-react';
+import { Search, Filter, Plus, Edit, Trash2, Eye, Star, Package, Download } from 'lucide-react';
+import { useSearch } from '../../hooks/useSearch';
+import ExportModal from '../../components/ExportModal';
 import Loader from '../../components/Loader';
 
 const AllProducts = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const { searchQuery, setSearchQuery } = useSearch();
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [viewMode, setViewMode] = useState('grid'); // grid or list
+  const [showExportModal, setShowExportModal] = useState(false);
 
   useEffect(() => {
     // Mock products data
@@ -32,8 +35,8 @@ const AllProducts = () => {
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch = 
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.sku.toLowerCase().includes(searchTerm.toLowerCase());
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.sku.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesCategory = 
       categoryFilter === 'all' || product.category === categoryFilter;
@@ -72,10 +75,19 @@ const AllProducts = () => {
           <h1 className="text-2xl font-bold text-gray-800">All Products</h1>
           <p className="text-gray-600 mt-1">Manage your product catalog</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-          <Plus size={18} />
-          Add Product
-        </button>
+        <div className="flex gap-3">
+          <button 
+            onClick={() => setShowExportModal(true)}
+            className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+          >
+            <Download size={18} />
+            Export
+          </button>
+          <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+            <Plus size={18} />
+            Add Product
+          </button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -105,8 +117,8 @@ const AllProducts = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
               type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search products by name or SKU..."
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
             />
@@ -246,6 +258,25 @@ const AllProducts = () => {
           </table>
         </div>
       )}
+
+      {/* Export Modal */}
+      <ExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        data={filteredProducts.map(({ id, name, category, price, stock, sales, rating, sku, status }) => ({
+          id,
+          name,
+          category,
+          'SKU': sku,
+          'Price': `$${price}`,
+          'Stock': stock,
+          'Sales': sales,
+          'Rating': rating,
+          'Status': status,
+        }))}
+        filename={`products-${new Date().toISOString().split('T')[0]}`}
+        dataName="Products"
+      />
     </div>
   );
 };

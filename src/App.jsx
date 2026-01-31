@@ -2,7 +2,10 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { SearchProvider } from './context/SearchContext';
+import { NotificationProvider } from './context/NotificationContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import NotificationCenter from './components/NotificationCenter';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 
@@ -47,31 +50,34 @@ function App() {
 
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
+      <SearchProvider>
+        <NotificationProvider>
+          <BrowserRouter>
+            <Routes>
 
-          {/* Public Route */}
-          <Route path="/login" element={<Login />} />
+              {/* Public Route */}
+              <Route path="/login" element={<Login />} />
 
-          {/* Protected Routes */}
-          <Route
-            path="/*"
-            element={
-              <ProtectedRoute>
-                <div className={`flex h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
-                  
-                  <Sidebar
-                    sidebarOpen={sidebarOpen}
-                    setSidebarOpen={setSidebarOpen}
-                  />
+              {/* Protected Routes */}
+              <Route
+                path="/*"
+                element={
+                  <ProtectedRoute>
+                    <div className={`flex h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
+                      
+                      <Sidebar
+                        sidebarOpen={sidebarOpen}
+                        setSidebarOpen={setSidebarOpen}
+                      />
 
-                  <div className="flex-1 flex flex-col overflow-hidden">
-                    <Navbar
-                      sidebarOpen={sidebarOpen}
-                      setSidebarOpen={setSidebarOpen}
-                      darkMode={darkMode}
-                      setDarkMode={setDarkMode}
-                    />
+                      <div className="flex-1 flex flex-col overflow-hidden">
+                        <Navbar
+                          sidebarOpen={sidebarOpen}
+                          setSidebarOpen={setSidebarOpen}
+                          darkMode={darkMode}
+                          setDarkMode={setDarkMode}
+                        />
+                        <NotificationCenter />
 
                     <main className="flex-1 overflow-auto p-4">
                       <Routes>
@@ -149,6 +155,8 @@ function App() {
           />
         </Routes>
       </BrowserRouter>
+      </NotificationProvider>
+      </SearchProvider>
     </AuthProvider>
   );
 }

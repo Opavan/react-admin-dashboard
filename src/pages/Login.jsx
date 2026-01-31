@@ -118,7 +118,7 @@ const Login = () => {
             disabled={loading}
             className="mt-3 w-full py-2 rounded-lg bg-green-600 hover:bg-green-700 transition text-white text-sm font-medium"
           >
-             Login as Demo User
+              Demo Login as Admin
           </button>
         </div>
 

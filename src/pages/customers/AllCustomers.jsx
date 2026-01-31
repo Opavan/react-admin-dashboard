@@ -1,12 +1,22 @@
 import { useState, useEffect } from 'react';
 import { Search, Filter, Download, UserPlus, Edit, Trash2, Mail, Phone, MoreVertical } from 'lucide-react';
+import { useSearch } from '../../hooks/useSearch';
+import AdvancedFilterModal from '../../components/AdvancedFilterModal';
+import ExportModal from '../../components/ExportModal';
 import Loader from '../../components/Loader';
 
 const AllCustomers = () => {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const { searchQuery, setSearchQuery } = useSearch();
   const [filterStatus, setFilterStatus] = useState('all');
+  const [advancedFilters, setAdvancedFilters] = useState({
+    status: [],
+    verified: [],
+    orderRange: [],
+  });
+  const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const customersPerPage = 10;
 
@@ -34,14 +44,38 @@ const AllCustomers = () => {
   // Filter and search
   const filteredCustomers = customers.filter((customer) => {
     const matchesSearch = 
-      customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.phone.includes(searchTerm);
+      customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      customer.phone.includes(searchQuery);
     
-    const matchesFilter = 
+    // Basic filter
+    const basicMatches = 
       filterStatus === 'all' || customer.status === filterStatus;
+
+    // Advanced filters
+    const statusMatch = 
+      advancedFilters.status.length === 0 || 
+      advancedFilters.status.includes(customer.status);
     
-    return matchesSearch && matchesFilter;
+    const verifiedMatch = 
+      advancedFilters.verified.length === 0 || 
+      advancedFilters.verified.some((v) => 
+        (v === 'verified' && customer.verified) || 
+        (v === 'unverified' && !customer.verified)
+      );
+
+    const orderMatch = 
+      advancedFilters.orderRange.length === 0 || 
+      advancedFilters.orderRange.some((range) => {
+        const orders = customer.orders;
+        if (range === '0-10') return orders <= 10;
+        if (range === '11-20') return orders >= 11 && orders <= 20;
+        if (range === '21-30') return orders >= 21 && orders <= 30;
+        if (range === '30+') return orders > 30;
+        return true;
+      });
+    
+    return matchesSearch && basicMatches && statusMatch && verifiedMatch && orderMatch;
   });
 
   // Pagination
@@ -63,7 +97,10 @@ const AllCustomers = () => {
           <p className="text-gray-600 mt-1">Manage and view all customer information</p>
         </div>
         <div className="flex gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+          <button 
+            onClick={() => setShowExportModal(true)}
+            className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+          >
             <Download size={18} />
             Export
           </button>
@@ -101,8 +138,8 @@ const AllCustomers = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
               type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by name, email, or phone..."
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
             />
@@ -118,9 +155,21 @@ const AllCustomers = () => {
               <option value="inactive">Inactive</option>
               <option value="pending">Pending</option>
             </select>
-            <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+            <button 
+              onClick={() => setShowAdvancedFilter(true)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${
+                Object.values(advancedFilters).some(v => v.length > 0)
+                  ? 'bg-blue-100 border border-blue-300 text-blue-700 hover:bg-blue-200'
+                  : 'border border-gray-300 hover:bg-gray-50'
+              }`}
+            >
               <Filter size={18} />
               More Filters
+              {Object.values(advancedFilters).some(v => v.length > 0) && (
+                <span className="ml-1 text-xs font-semibold bg-blue-600 text-white px-2 py-0.5 rounded-full">
+                  {Object.values(advancedFilters).flat().length}
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -244,6 +293,51 @@ const AllCustomers = () => {
           </div>
         </div>
       </div>
+
+      {/* Advanced Filter Modal */}
+      <AdvancedFilterModal
+        isOpen={showAdvancedFilter}
+        onClose={() => setShowAdvancedFilter(false)}
+        onApply={() => setShowAdvancedFilter(false)}
+        filters={advancedFilters}
+        onFilterChange={setAdvancedFilters}
+        filterOptions={{
+          status: [
+            { value: 'active', label: 'Active', count: customers.filter(c => c.status === 'active').length },
+            { value: 'inactive', label: 'Inactive', count: customers.filter(c => c.status === 'inactive').length },
+            { value: 'pending', label: 'Pending', count: customers.filter(c => c.status === 'pending').length },
+          ],
+          verified: [
+            { value: 'verified', label: 'Verified', count: customers.filter(c => c.verified).length },
+            { value: 'unverified', label: 'Unverified', count: customers.filter(c => !c.verified).length },
+          ],
+          orderRange: [
+            { value: '0-10', label: '0-10 Orders', count: customers.filter(c => c.orders <= 10).length },
+            { value: '11-20', label: '11-20 Orders', count: customers.filter(c => c.orders >= 11 && c.orders <= 20).length },
+            { value: '21-30', label: '21-30 Orders', count: customers.filter(c => c.orders >= 21 && c.orders <= 30).length },
+            { value: '30+', label: '30+ Orders', count: customers.filter(c => c.orders > 30).length },
+          ],
+        }}
+      />
+
+      {/* Export Modal */}
+      <ExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        data={filteredCustomers.map(({ id, name, email, phone, status, verified, orders, totalSpent, joined }) => ({
+          id,
+          name,
+          email,
+          phone,
+          status,
+          verified: verified ? 'Yes' : 'No',
+          orders,
+          'Total Spent': totalSpent,
+          'Joined Date': joined,
+        }))}
+        filename={`customers-${new Date().toISOString().split('T')[0]}`}
+        dataName="Customers"
+      />
     </div>
   );
 };

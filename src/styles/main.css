@@ -37,6 +37,22 @@
   animation: fadeIn 0.3s ease-in-out;
 }
 
+/* Notification animation */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(400px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slideIn {
+  animation: slideIn 0.3s ease-out;
+}
+
 /* Loading spinner */
 .spinner {
   border: 3px solid #f3f3f3;

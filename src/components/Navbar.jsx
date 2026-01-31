@@ -1,5 +1,7 @@
-import { Menu, X, LogOut, User, Search, Moon, Sun, Bell } from 'lucide-react';
+import { Menu, X, LogOut, User, Search, Moon, Sun, Bell, Trash2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { useSearch } from '../hooks/useSearch';
+import { useNotification } from '../hooks/useNotification';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -7,19 +9,24 @@ import toast from 'react-hot-toast';
 
 const Navbar = ({ sidebarOpen, setSidebarOpen, darkMode, setDarkMode }) => {
   const { user, logout } = useAuth();
+  const { searchQuery, setSearchQuery } = useSearch();
+  const { notifications, removeNotification, clearAll } = useNotification();
   const navigate = useNavigate();
 
-  const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
   const profileRef = useRef(null);
+  const notificationRef = useRef(null);
 
   // Close profile menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (profileRef.current && !profileRef.current.contains(e.target)) {
         setProfileOpen(false);
+      }
+      if (notificationRef.current && !notificationRef.current.contains(e.target)) {
+        setShowNotifications(false);
       }
     };
 
@@ -81,20 +88,58 @@ const Navbar = ({ sidebarOpen, setSidebarOpen, darkMode, setDarkMode }) => {
           </button>
 
           {/* Notifications */}
-          <div className="relative">
+          <div className="relative" ref={notificationRef}>
             <button
               onClick={() => setShowNotifications(!showNotifications)}
               className="p-2 rounded-lg hover:bg-gray-100 transition relative"
             >
               <Bell size={20} />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+              {notifications.length > 0 && (
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+              )}
             </button>
 
             {showNotifications && (
-              <div className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border z-50">
-                <p className="px-4 py-3 text-sm text-gray-600">
-                  No new notifications
-                </p>
+              <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg border z-50">
+                <div className="flex items-center justify-between px-4 py-3 border-b">
+                  <h3 className="font-semibold text-gray-800">Notifications</h3>
+                  {notifications.length > 0 && (
+                    <button
+                      onClick={clearAll}
+                      className="text-xs text-red-600 hover:text-red-700 font-medium"
+                    >
+                      Clear All
+                    </button>
+                  )}
+                </div>
+                
+                <div className="max-h-96 overflow-y-auto">
+                  {notifications.length === 0 ? (
+                    <p className="px-4 py-6 text-sm text-gray-600 text-center">
+                      No new notifications
+                    </p>
+                  ) : (
+                    <div className="divide-y">
+                      {notifications.map((notification) => (
+                        <div
+                          key={notification.id}
+                          className="px-4 py-3 hover:bg-gray-50 transition flex items-start justify-between gap-3"
+                        >
+                          <div className="flex-1">
+                            <p className="text-sm text-gray-800">{notification.message}</p>
+                            <p className="text-xs text-gray-500 mt-1">Just now</p>
+                          </div>
+                          <button
+                            onClick={() => removeNotification(notification.id)}
+                            className="p-1 hover:bg-gray-200 rounded transition"
+                          >
+                            <X size={16} className="text-gray-400" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

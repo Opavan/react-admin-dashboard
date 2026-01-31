@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { UserCheck, UserX, Eye, Clock, TrendingUp } from 'lucide-react';
+import { UserCheck, UserX, Eye, Clock, TrendingUp, Search } from 'lucide-react';
+import { useSearch } from '../../hooks/useSearch';
 import Loader from '../../components/Loader';
 
 const NewCustomers = () => {
   const [newCustomers, setNewCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { searchQuery, setSearchQuery } = useSearch();
   const [timeFilter, setTimeFilter] = useState('7days');
 
   useEffect(() => {
@@ -41,23 +43,45 @@ const NewCustomers = () => {
   const pendingCount = newCustomers.filter(c => c.status === 'pending').length;
   const activeCount = newCustomers.filter(c => c.status === 'active').length;
 
+  // Filter and search
+  const filteredCustomers = newCustomers.filter((customer) => {
+    const matchesSearch = 
+      customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      customer.phone.includes(searchQuery);
+    
+    return matchesSearch;
+  });
+
   return (
     <div className="p-6 fade-in">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-bold text-gray-800">New Customers</h1>
           <p className="text-gray-600 mt-1">Recently registered customers awaiting review</p>
         </div>
-        <select
-          value={timeFilter}
-          onChange={(e) => setTimeFilter(e.target.value)}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-        >
-          <option value="24hours">Last 24 Hours</option>
-          <option value="7days">Last 7 Days</option>
-          <option value="30days">Last 30 Days</option>
-        </select>
+        <div className="flex gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by name or email..."
+              className="w-full md:w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+          </div>
+          <select
+            value={timeFilter}
+            onChange={(e) => setTimeFilter(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+          >
+            <option value="24hours">Last 24 Hours</option>
+            <option value="7days">Last 7 Days</option>
+            <option value="30days">Last 30 Days</option>
+          </select>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -107,7 +131,7 @@ const NewCustomers = () => {
 
       {/* New Customers Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {newCustomers.map((customer) => (
+        {filteredCustomers.map((customer) => (
           <div key={customer.id} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition">
             <div className="p-6">
               <div className="flex items-start justify-between mb-4">
